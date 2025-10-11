@@ -23,6 +23,8 @@ import { GradientCard } from '@/components/GradientCard';
 import { GradientButton } from '@/components/GradientButton';
 import { AnimatedProgress } from '@/components/AnimatedProgress';
 import { IconCard } from '@/components/IconCard';
+import { AIResultCard } from '@/components/AIResultCard';
+import type { AIResult } from '@/types/ai';
 import { supabase } from '@/lib/supabase';
 
 interface SyncOperation {
@@ -81,6 +83,41 @@ export default function SyncScreen() {
       setAiModels(models);
     }
   };
+
+
+  const sampleColors = ['#E57373', '#4DB6AC', '#FFD54F', '#90A4AE', '#9FA8DA'];
+  const sampleStates = ['intact', 'corroded', 'oxidized', 'powdery', 'wet'];
+  const sampleCategories = ['Metal', 'Polymer', 'Ceramic', 'Composite', 'Organic'];
+
+  const [aiResult, setAiResult] = useState<AIResult | null>(null);
+
+  useEffect(() => {
+    // create an initial simulated result and update every 5s
+    const makeResult = () => {
+      const idx = Math.floor(Math.random() * sampleColors.length);
+      const state = sampleStates[Math.floor(Math.random() * sampleStates.length)];
+      const category = sampleCategories[Math.floor(Math.random() * sampleCategories.length)];
+      const confidence = Math.floor(70 + Math.random() * 30); // realistic high confidence
+      const now = new Date().toISOString();
+
+      const r: AIResult = {
+        id: now,
+        detectedColor: sampleColors[idx],
+        materialState: state,
+        category,
+        confidence,
+        timestamp: now,
+        notes: `Auto-detected with simulated model v${Math.floor(Math.random()*5)+1}`,
+      };
+      setAiResult(r);
+    };
+
+    makeResult();
+    const iv = setInterval(makeResult, 5000);
+    return () => clearInterval(iv);
+  }, []);
+
+  // AIResultCard moved to components/AIResultCard.tsx
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -204,6 +241,10 @@ export default function SyncScreen() {
               value={`${model.accuracy_metric}%`}
             />
           ))}
+          
+          {/* AI Scan Results (simulated) */}
+          <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 8 }]}>AI Scan Results</Text>
+          <AIResultCard result={aiResult} />
         </View>
 
         <View style={styles.section}>

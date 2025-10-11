@@ -177,3 +177,32 @@ Private - DeepSpectrum Analytics Private Limited
 ## Contact
 
 For support or inquiries, contact DeepSpectrum Analytics.
+
+## Deploying to Netlify
+
+This project is an Expo web-exportable React app. To host the web build on Netlify, follow these steps:
+
+1. Install dependencies and build the web export:
+
+```bash
+npm install
+npm run build
+```
+
+2. The build output will be placed into the `dist` directory (Expo's static export). Netlify should publish that directory.
+
+3. Netlify configuration: this repo includes a `netlify.toml` at the project root. It instructs Netlify to run `npm run build` and publish the `web-build` directory, and contains a redirect so client-side routes resolve to `index.html`.
+
+4. Environment variables:
+ - `EXPO_PUBLIC_SUPABASE_URL` — Your Supabase URL
+ - `EXPO_PUBLIC_SUPABASE_ANON_KEY` — Your Supabase anon key
+
+Set the above variables in your Netlify site dashboard under "Site settings → Build & deploy → Environment" (or use the Netlify CLI). These must be present for the app to connect to Supabase after deployment.
+
+5. Optional: Use Netlify Git integration — connect the repository, and Netlify will run the `npm run build` command automatically on each push to the configured branch.
+
+Troubleshooting:
+- If you see a blank page after deploy, check the browser console for runtime errors. Ensure the environment variables are set in Netlify.
+- If routing fails on refresh, ensure the redirects in `netlify.toml` exist (they are included by default in this repo).
+
+If you want, I can create a CI workflow or GitHub Action to automatically deploy to Netlify on push.

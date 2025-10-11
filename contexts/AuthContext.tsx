@@ -22,7 +22,7 @@ const fakeSession = {
 const fakeProfile = {
   id: 'dev-user',
   email: 'dev@local',
-  full_name: 'Developer',
+  full_name: 'Muthu Manoj L',
   company_name: 'Local',
   biometric_enabled: false,
   theme_preference: 'dark',

@@ -178,6 +178,8 @@ Private - DeepSpectrum Analytics Private Limited
 
 For support or inquiries, contact DeepSpectrum Analytics.
 
+Developer: Muthu Manoj L
+
 ## Deploying to Netlify
 
 This project is an Expo web-exportable React app. To host the web build on Netlify, follow these steps:

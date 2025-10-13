@@ -104,32 +104,50 @@ export default function LoginScreen() {
   };
 
   // --- WebAuthn demo helpers (client-only, stores credential in localStorage) ---
+  // helper: base64url <-> ArrayBuffer
+  const bufferToBase64Url = (buffer: ArrayBuffer) => {
+    const bytes = new Uint8Array(buffer);
+    let str = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      str += String.fromCharCode(bytes[i]);
+    }
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  };
+
+  const base64UrlToBuffer = (base64url: string) => {
+    const pad = (4 - (base64url.length % 4)) % 4;
+    const base64 = (base64url + '='.repeat(pad)).replace(/-/g, '+').replace(/_/g, '/');
+    const str = atob(base64);
+    const bytes = new Uint8Array(str.length);
+    for (let i = 0; i < str.length; i++) bytes[i] = str.charCodeAt(i);
+    return bytes.buffer;
+  };
+
   const handleWebRegister = async () => {
-    if (typeof window === 'undefined' || !('PublicKeyCredential' in window)) {
+    if (typeof window === 'undefined' || !(window as any).PublicKeyCredential) {
       Alert.alert('Not supported', 'WebAuthn is not supported in this browser');
       return;
     }
 
     try {
-      const creationOptions = {
-        publicKey: {
-          challenge: Uint8Array.from(window.crypto.getRandomValues(new Uint8Array(32))),
-          rp: { name: 'Demo Spectro' },
-          user: {
-            id: Uint8Array.from(String(Math.random())).buffer,
-            name: 'demo@local',
-            displayName: 'Demo User',
-          },
-          pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
-          authenticatorSelection: { userVerification: 'preferred' },
-          timeout: 60000,
-        },
-      } as any;
+      const challenge = window.crypto.getRandomValues(new Uint8Array(32));
+      const userId = window.crypto.getRandomValues(new Uint8Array(16));
 
-      const cred = await (navigator as any).credentials.create(creationOptions);
+      const publicKey: any = {
+        challenge: challenge.buffer,
+        rp: { name: 'Demo Spectro', id: window.location.hostname },
+        user: { id: userId.buffer, name: 'demo@local', displayName: 'Demo User' },
+        pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
+        authenticatorSelection: { userVerification: 'preferred' },
+        timeout: 60000,
+      };
+
+      const cred: any = await (navigator as any).credentials.create({ publicKey });
       if (cred) {
-        window.localStorage.setItem('webauthn-demo-cred', JSON.stringify({ id: (cred as any).id }));
-        Alert.alert('Registered', 'Demo authenticator registered');
+        // store credential id as base64url so we can use it during get()
+        const id = bufferToBase64Url(cred.rawId || cred.id);
+        window.localStorage.setItem('webauthn-demo-cred', JSON.stringify({ id }));
+        Alert.alert('Registered', 'Demo authenticator registered on this device/browser');
       }
     } catch (err) {
       Alert.alert('Register failed', String(err));
@@ -137,25 +155,25 @@ export default function LoginScreen() {
   };
 
   const handleWebAuthenticate = async () => {
-    if (typeof window === 'undefined' || !('PublicKeyCredential' in window)) {
+    if (typeof window === 'undefined' || !(window as any).PublicKeyCredential) {
       Alert.alert('Not supported', 'WebAuthn is not supported in this browser');
       return;
     }
 
     try {
       const stored = window.localStorage.getItem('webauthn-demo-cred');
-      const allowIds = stored ? [Uint8Array.from(JSON.parse(stored).id || '').buffer] : undefined;
+      const allowCredentials = stored
+        ? [{ id: base64UrlToBuffer(JSON.parse(stored).id), type: 'public-key' }]
+        : undefined;
 
-      const requestOptions = {
-        publicKey: {
-          challenge: Uint8Array.from(window.crypto.getRandomValues(new Uint8Array(32))),
-          timeout: 60000,
-          allowCredentials: allowIds ? allowIds.map((id) => ({ id, type: 'public-key' })) : undefined,
-          userVerification: 'preferred',
-        },
-      } as any;
+      const publicKey: any = {
+        challenge: window.crypto.getRandomValues(new Uint8Array(32)).buffer,
+        timeout: 60000,
+        allowCredentials,
+        userVerification: 'preferred',
+      };
 
-      const assertion = await (navigator as any).credentials.get(requestOptions);
+      const assertion: any = await (navigator as any).credentials.get({ publicKey });
       if (assertion) {
         // demo success: sign in with demo credentials
         setLoading(true);

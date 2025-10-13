@@ -18,11 +18,13 @@ import { FontAwesome } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import Svg, { Path } from 'react-native-svg';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
+  const { colors } = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -206,22 +208,22 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={["#0a192f", "#122240"]} style={styles.container}>
+    <LinearGradient colors={[colors.primaryGradientStart, colors.primaryGradientEnd]} style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.headerWrap}>
             <View style={styles.waveContainer} pointerEvents="none">
               <Svg viewBox="0 0 500 150" preserveAspectRatio="none" style={styles.wave}>
-                <Path d="M0,100 C150,200 350,0 500,100 L500,0 L0,0 Z" fill="#122240" />
+                <Path d="M0,100 C150,200 350,0 500,100 L500,0 L0,0 Z" fill={colors.primaryGradientEnd} />
               </Svg>
               <Svg viewBox="0 0 500 150" preserveAspectRatio="none" style={[styles.wave, { position: 'absolute', top: 10 }] }>
-                <Path d="M0,80 C150,180 300,30 500,80 L500,0 L0,0 Z" stroke="rgba(255,105,180,0.28)" strokeWidth={2} fill="none" />
+                <Path d="M0,80 C150,180 300,30 500,80 L500,0 L0,0 Z" stroke={`${colors.primary}28`} strokeWidth={2} fill="none" />
               </Svg>
             </View>
 
             <Text style={styles.brand}>DeepSpectrum</Text>
             <Text style={styles.brandSub}>Analytics Private Limited</Text>
-            <View style={styles.underlineGradient} />
+            <View style={[styles.underlineGradient, { backgroundColor: colors.primary }]} />
           </View>
 
           <View style={styles.formContainer}>
@@ -230,7 +232,7 @@ export default function LoginScreen() {
 
             <View style={styles.card}>
               <View style={styles.inputRow}>
-                <Mail size={20} color="#ff69b4" />
+                  <Mail size={20} color={colors.primary} />
                 <TextInput
                   placeholder="Email"
                   placeholderTextColor="#cbd5e1"
@@ -243,7 +245,7 @@ export default function LoginScreen() {
               </View>
 
               <View style={styles.inputRow}>
-                <Lock size={20} color="#ff69b4" />
+                  <Lock size={20} color={colors.primary} />
                 <TextInput
                   placeholder="Password"
                   placeholderTextColor="#cbd5e1"
@@ -268,13 +270,13 @@ export default function LoginScreen() {
               </View>
 
               <TouchableOpacity style={styles.signInButton} onPress={handleLogin} activeOpacity={0.9}>
-                <LinearGradient colors={["#ff69b4", "#da70d6"]} style={styles.signInButtonInner}>
+                <LinearGradient colors={[colors.primaryGradientStart, colors.primaryGradientEnd]} style={styles.signInButtonInner}>
                   <Text style={styles.signInButtonText}>Sign in</Text>
                 </LinearGradient>
               </TouchableOpacity>
 
               <View style={{ marginTop: 12, alignItems: 'center' }}>
-                <Text style={styles.noAccountText}>Do not have an account? <Text style={styles.signUpText}>Sign up</Text></Text>
+                <Text style={styles.noAccountText}>Do not have an account? <Text style={[styles.signUpText, { color: colors.primary }]}>Sign up</Text></Text>
               </View>
 
               {/* Fingerprint access option (visible on mobile when available) */}
@@ -284,7 +286,7 @@ export default function LoginScreen() {
                     <>
                       <TouchableOpacity onPress={handleWebAuthenticate} accessibilityLabel="Use fingerprint (web)" style={styles.fingerprintButton} activeOpacity={0.85}>
                         <View style={styles.fingerprintCircle}>
-                          <Fingerprint size={28} color="#ff69b4" />
+                          <Fingerprint size={28} color={colors.primary} />
                         </View>
                         <Text style={styles.fingerprintText}>Use platform authenticator</Text>
                       </TouchableOpacity>
@@ -295,7 +297,7 @@ export default function LoginScreen() {
                   ) : (
                     <TouchableOpacity onPress={handleBiometricAuth} accessibilityLabel="Fingerprint sign in" style={styles.fingerprintButton} activeOpacity={0.85}>
                       <View style={styles.fingerprintCircle}>
-                        <Fingerprint size={28} color="#ff69b4" />
+                        <Fingerprint size={28} color={colors.primary} />
                       </View>
                       <Text style={styles.fingerprintText}>Fingerprint Access</Text>
                     </TouchableOpacity>
@@ -306,9 +308,9 @@ export default function LoginScreen() {
               {/* Looping bouncing dots */}
               <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
                 <View style={styles.dotsRow}>
-                  <Animated.View style={[styles.dot, { transform: [{ translateY: dot1 }] }]} />
-                  <Animated.View style={[styles.dot, { marginLeft: 6, transform: [{ translateY: dot2 }] }]} />
-                  <Animated.View style={[styles.dot, { marginLeft: 6, transform: [{ translateY: dot3 }] }]} />
+                  <Animated.View style={[styles.dot, { transform: [{ translateY: dot1 }], backgroundColor: colors.primary }]} />
+                  <Animated.View style={[styles.dot, { marginLeft: 6, transform: [{ translateY: dot2 }], backgroundColor: colors.primary }]} />
+                  <Animated.View style={[styles.dot, { marginLeft: 6, transform: [{ translateY: dot3 }], backgroundColor: colors.primary }]} />
                 </View>
               </View>
               
@@ -328,8 +330,8 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.decorative} pointerEvents="none">
-            <View style={styles.pinkBlur} />
-            <View style={styles.violetBlur} />
+            <View style={[styles.pinkBlur, { backgroundColor: colors.primaryGradientStart }]} />
+            <View style={[styles.violetBlur, { backgroundColor: colors.primaryGradientEnd }]} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -345,11 +347,11 @@ const styles = StyleSheet.create({
   wave: { width: '100%', height: '100%' },
   brand: { fontSize: 32, fontWeight: '800', color: '#fff', marginTop: 10, backgroundClip: 'text' as any },
   brandSub: { color: '#cbd5e1', marginTop: 4 },
-  underlineGradient: { width: 96, height: 4, borderRadius: 999, marginTop: 10, backgroundColor: '#ff69b4' },
+  underlineGradient: { width: 96, height: 4, borderRadius: 999, marginTop: 10 },
   formContainer: { flex: 1, paddingHorizontal: 6, maxWidth: 520, width: '100%', alignSelf: 'center' },
   signInTitle: { fontSize: 28, fontWeight: '800', color: '#fff', textAlign: 'center' },
-  signInUnderline: { width: 64, height: 3, borderRadius: 999, backgroundColor: '#ff69b4', alignSelf: 'center', marginTop: 8, marginBottom: 14 },
-  card: { backgroundColor: 'rgba(18,34,64,0.28)', padding: 18, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,105,180,0.12)' },
+  signInUnderline: { width: 64, height: 3, borderRadius: 999, alignSelf: 'center', marginTop: 8, marginBottom: 14 },
+  card: { backgroundColor: 'rgba(18,34,64,0.28)', padding: 18, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
   inputRow: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)', paddingVertical: 10, marginBottom: 12 },
   input: { marginLeft: 12, flex: 1, color: '#fff', paddingVertical: 6 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
@@ -361,12 +363,12 @@ const styles = StyleSheet.create({
   signInButtonInner: { paddingVertical: 14, alignItems: 'center' },
   signInButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   noAccountText: { color: '#cbd5e1' },
-  signUpText: { color: '#ff69b4', fontWeight: '700' },
+  signUpText: { color: '#fff', fontWeight: '700' },
   decorative: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  pinkBlur: { position: 'absolute', top: '20%', left: -40, width: 160, height: 160, backgroundColor: '#ff69b4', borderRadius: 100, opacity: 0.18, transform: [{ scale: 1 }] },
-  violetBlur: { position: 'absolute', bottom: '30%', right: -40, width: 160, height: 160, backgroundColor: '#da70d6', borderRadius: 100, opacity: 0.18 },
+  pinkBlur: { position: 'absolute', top: '20%', left: -40, width: 160, height: 160, borderRadius: 100, opacity: 0.18, transform: [{ scale: 1 }] },
+  violetBlur: { position: 'absolute', bottom: '30%', right: -40, width: 160, height: 160, borderRadius: 100, opacity: 0.18 },
   fingerprintButton: { alignItems: 'center' },
-  fingerprintCircle: { width: 64, height: 64, borderRadius: 999, backgroundColor: '#122240', borderWidth: 1, borderColor: 'rgba(255,105,180,0.2)', alignItems: 'center', justifyContent: 'center' },
+  fingerprintCircle: { width: 64, height: 64, borderRadius: 999, backgroundColor: '#122240', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
   fingerprintText: { color: '#cbd5e1', marginTop: 8 },
   dotsRow: { flexDirection: 'row', alignItems: 'flex-end' },
   dot: { width: 8, height: 8, borderRadius: 999, backgroundColor: '#ff69b4', transform: [{ translateY: 0 }] },

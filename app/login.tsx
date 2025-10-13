@@ -36,7 +36,13 @@ export default function LoginScreen() {
 
   useEffect(() => {
     (async () => {
-      if (Platform.OS === 'web') return;
+      if (Platform.OS === 'web') {
+        // On web we can offer a WebAuthn-based demo if the browser supports it.
+        const webAvailable = typeof window !== 'undefined' && (window.PublicKeyCredential !== undefined);
+        setBiometricAvailable(!!webAvailable);
+        return;
+      }
+
       const compat = await LocalAuthentication.hasHardwareAsync();
       const enrolled = await LocalAuthentication.isEnrolledAsync();
       setBiometricAvailable(compat && enrolled);
@@ -61,8 +67,8 @@ export default function LoginScreen() {
 
   const handleBiometricAuth = async () => {
     if (Platform.OS === 'web') {
-      Alert.alert('Not Available', 'Biometric authentication is not available on web in this demo');
-      return;
+      // On web we route to WebAuthn demo authenticate which uses navigator.credentials
+      return handleWebAuthenticate();
     }
     try {
       const result = await LocalAuthentication.authenticateAsync({
@@ -94,6 +100,73 @@ export default function LoginScreen() {
       router.replace('/(tabs)');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // --- WebAuthn demo helpers (client-only, stores credential in localStorage) ---
+  const handleWebRegister = async () => {
+    if (typeof window === 'undefined' || !('PublicKeyCredential' in window)) {
+      Alert.alert('Not supported', 'WebAuthn is not supported in this browser');
+      return;
+    }
+
+    try {
+      const creationOptions = {
+        publicKey: {
+          challenge: Uint8Array.from(window.crypto.getRandomValues(new Uint8Array(32))),
+          rp: { name: 'Demo Spectro' },
+          user: {
+            id: Uint8Array.from(String(Math.random())).buffer,
+            name: 'demo@local',
+            displayName: 'Demo User',
+          },
+          pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
+          authenticatorSelection: { userVerification: 'preferred' },
+          timeout: 60000,
+        },
+      } as any;
+
+      const cred = await (navigator as any).credentials.create(creationOptions);
+      if (cred) {
+        window.localStorage.setItem('webauthn-demo-cred', JSON.stringify({ id: (cred as any).id }));
+        Alert.alert('Registered', 'Demo authenticator registered');
+      }
+    } catch (err) {
+      Alert.alert('Register failed', String(err));
+    }
+  };
+
+  const handleWebAuthenticate = async () => {
+    if (typeof window === 'undefined' || !('PublicKeyCredential' in window)) {
+      Alert.alert('Not supported', 'WebAuthn is not supported in this browser');
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem('webauthn-demo-cred');
+      const allowIds = stored ? [Uint8Array.from(JSON.parse(stored).id || '').buffer] : undefined;
+
+      const requestOptions = {
+        publicKey: {
+          challenge: Uint8Array.from(window.crypto.getRandomValues(new Uint8Array(32))),
+          timeout: 60000,
+          allowCredentials: allowIds ? allowIds.map((id) => ({ id, type: 'public-key' })) : undefined,
+          userVerification: 'preferred',
+        },
+      } as any;
+
+      const assertion = await (navigator as any).credentials.get(requestOptions);
+      if (assertion) {
+        // demo success: sign in with demo credentials
+        setLoading(true);
+        await signIn('1234', '1234');
+        setLoading(false);
+        router.replace('/(tabs)');
+      } else {
+        Alert.alert('Auth failed', 'No credential asserted');
+      }
+    } catch (err) {
+      Alert.alert('Auth failed', String(err));
     }
   };
 
@@ -189,12 +262,26 @@ export default function LoginScreen() {
               {/* Fingerprint access option (visible on mobile when available) */}
               {biometricAvailable && (
                 <View style={{ alignItems: 'center', marginTop: 12 }}>
-                  <TouchableOpacity onPress={handleBiometricAuth} accessibilityLabel="Fingerprint sign in" style={styles.fingerprintButton} activeOpacity={0.85}>
-                    <View style={styles.fingerprintCircle}>
-                      <Fingerprint size={28} color="#ff69b4" />
-                    </View>
-                    <Text style={styles.fingerprintText}>Fingerprint Access</Text>
-                  </TouchableOpacity>
+                  {Platform.OS === 'web' ? (
+                    <>
+                      <TouchableOpacity onPress={handleWebAuthenticate} accessibilityLabel="Use fingerprint (web)" style={styles.fingerprintButton} activeOpacity={0.85}>
+                        <View style={styles.fingerprintCircle}>
+                          <Fingerprint size={28} color="#ff69b4" />
+                        </View>
+                        <Text style={styles.fingerprintText}>Use platform authenticator</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={handleWebRegister} accessibilityLabel="Register authenticator (web)" style={[styles.fingerprintButton, { marginTop: 8 }]} activeOpacity={0.85}>
+                        <Text style={[styles.fingerprintText, { color: '#cbd5e1' }]}>Register demo authenticator</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <TouchableOpacity onPress={handleBiometricAuth} accessibilityLabel="Fingerprint sign in" style={styles.fingerprintButton} activeOpacity={0.85}>
+                      <View style={styles.fingerprintCircle}>
+                        <Fingerprint size={28} color="#ff69b4" />
+                      </View>
+                      <Text style={styles.fingerprintText}>Fingerprint Access</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
 

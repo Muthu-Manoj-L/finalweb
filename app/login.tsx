@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,12 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Animated,
+  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Mail, Lock, Fingerprint } from 'lucide-react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,7 +29,10 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
-  const [dotsVisible, setDotsVisible] = useState(true);
+  // animated values for the three dots
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     (async () => {
@@ -35,11 +41,27 @@ export default function LoginScreen() {
       const enrolled = await LocalAuthentication.isEnrolledAsync();
       setBiometricAvailable(compat && enrolled);
     })();
+
+    // start animated dots loop
+    const startLoop = (anim: Animated.Value, delay = 0) => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, { toValue: -8, duration: 300, useNativeDriver: true, easing: Easing.inOut(Easing.quad) }),
+          Animated.timing(anim, { toValue: 0, duration: 300, useNativeDriver: true, easing: Easing.inOut(Easing.quad) }),
+          Animated.delay(150),
+        ])
+      ).start();
+    };
+
+    startLoop(dot1, 0);
+    startLoop(dot2, 150);
+    startLoop(dot3, 300);
   }, []);
 
   const handleBiometricAuth = async () => {
     if (Platform.OS === 'web') {
-      Alert.alert('Not Available', 'Biometric authentication is not available on web');
+      Alert.alert('Not Available', 'Biometric authentication is not available on web in this demo');
       return;
     }
     try {
@@ -59,6 +81,19 @@ export default function LoginScreen() {
       }
     } catch (err) {
       Alert.alert('Error', 'Biometric authentication failed');
+    }
+  };
+
+  const handleSocialLogin = async (provider: 'google' | 'github' | 'linkedin') => {
+    // In this frontend demo we stub social logins to a demo session.
+    // If you wire up supabase or another provider, replace this with the real flow.
+    Alert.alert('Social login (demo)', `Signing in with ${provider} (demo)`);
+    setLoading(true);
+    try {
+      await signIn('1234', '1234');
+      router.replace('/(tabs)');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -166,10 +201,23 @@ export default function LoginScreen() {
               {/* Looping bouncing dots */}
               <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
                 <View style={styles.dotsRow}>
-                  <View style={[styles.dot, { animationDelay: '0ms' }]} />
-                  <View style={[styles.dot, { animationDelay: '200ms', marginLeft: 6 }]} />
-                  <View style={[styles.dot, { animationDelay: '400ms', marginLeft: 6 }]} />
+                  <Animated.View style={[styles.dot, { transform: [{ translateY: dot1 }] }]} />
+                  <Animated.View style={[styles.dot, { marginLeft: 6, transform: [{ translateY: dot2 }] }]} />
+                  <Animated.View style={[styles.dot, { marginLeft: 6, transform: [{ translateY: dot3 }] }]} />
                 </View>
+              </View>
+              
+              {/* Social login buttons (demo) */}
+              <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 14 }}>
+                <TouchableOpacity onPress={() => handleSocialLogin('google')} style={[styles.socialButton, { backgroundColor: '#db4437' }]} accessibilityLabel="Sign in with Google">
+                  <FontAwesome name="google" size={18} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleSocialLogin('linkedin')} style={[styles.socialButton, { backgroundColor: '#0a66c2', marginLeft: 12 }]} accessibilityLabel="Sign in with LinkedIn">
+                  <FontAwesome name="linkedin" size={18} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleSocialLogin('github')} style={[styles.socialButton, { backgroundColor: '#333', marginLeft: 12 }]} accessibilityLabel="Sign in with GitHub">
+                  <FontAwesome name="github" size={18} color="#fff" />
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -217,5 +265,6 @@ const styles = StyleSheet.create({
   fingerprintText: { color: '#cbd5e1', marginTop: 8 },
   dotsRow: { flexDirection: 'row', alignItems: 'flex-end' },
   dot: { width: 8, height: 8, borderRadius: 999, backgroundColor: '#ff69b4', transform: [{ translateY: 0 }] },
+  socialButton: { width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 });
 

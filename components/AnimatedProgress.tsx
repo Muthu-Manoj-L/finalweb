@@ -1,11 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -15,30 +9,26 @@ interface AnimatedProgressProps {
   showPercentage?: boolean;
 }
 
-export function AnimatedProgress({
-  progress,
-  height = 8,
-  showPercentage = false,
-}: AnimatedProgressProps) {
+export function AnimatedProgress({ progress, height = 8 }: AnimatedProgressProps) {
   const { colors } = useTheme();
-  const progressValue = useSharedValue(0);
+  const animated = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    progressValue.value = withSpring(progress, {
-      damping: 15,
-      stiffness: 100,
-    });
-  }, [progress]);
+    Animated.timing(animated, {
+      toValue: Math.max(0, Math.min(100, progress)),
+      duration: 400,
+      useNativeDriver: false,
+    }).start();
+  }, [progress, animated]);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      width: `${progressValue.value}%`,
-    };
+  const widthInterpolated = animated.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
   });
 
   return (
     <View style={[styles.container, { height, backgroundColor: colors.surfaceVariant }]}>
-      <Animated.View style={[styles.progress, animatedStyle]}>
+      <Animated.View style={[styles.progress, { width: widthInterpolated }] as any}>
         <LinearGradient
           colors={[colors.primaryGradientStart, colors.primaryGradientEnd]}
           start={{ x: 0, y: 0 }}
@@ -59,6 +49,7 @@ const styles = StyleSheet.create({
   progress: {
     height: '100%',
     borderRadius: 100,
+    overflow: 'hidden',
   },
   gradient: {
     flex: 1,

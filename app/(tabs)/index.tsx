@@ -126,7 +126,7 @@ export default function DashboardScreen() {
           </View>
           <TouchableOpacity
             onPress={() => router.push('/(tabs)/settings')}
-            style={styles.settingsButton}
+            style={[styles.settingsButton, { backgroundColor: colors.primary }]}
           >
             <SettingsIcon size={24} color="#FFFFFF" />
           </TouchableOpacity>

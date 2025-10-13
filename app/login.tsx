@@ -9,20 +9,17 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
-  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Fingerprint, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, Fingerprint } from 'lucide-react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { GradientButton } from '@/components/GradientButton';
+import Svg, { Path } from 'react-native-svg';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
-  const { colors } = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,32 +41,26 @@ export default function LoginScreen() {
       Alert.alert('Not Available', 'Biometric authentication is not available on web');
       return;
     }
-
     try {
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Authenticate to access DeepSpectrum',
-        cancelLabel: 'Cancel',
-        disableDeviceFallback: false,
       });
-
       if (result.success) {
         Alert.alert('Success', 'Biometric authentication successful');
       }
-    } catch (error) {
+    } catch (err) {
       Alert.alert('Error', 'Biometric authentication failed');
     }
   };
 
   const handleLogin = async () => {
-    // require both fields to be exactly '1234' for this demo
+    // Demo-only gate: both fields must be '1234'
     if (email !== '1234' || password !== '1234') {
-      Alert.alert('Invalid credentials', 'Enter email and password as 1234 to sign in (demo)');
+      Alert.alert('Invalid credentials', "Enter email and password as 1234 to sign in (demo)");
       return;
     }
-
     setLoading(true);
     try {
-      // only allow demo login when credentials are correct
       await signIn(email, password);
       router.replace('/(tabs)');
     } catch (error: any) {
@@ -80,92 +71,82 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={[colors.background, colors.surface]}
-      style={styles.container}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            {/* Logo removed as requested */}
+    <LinearGradient colors={["#0a192f", "#122240"]} style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.headerWrap}>
+            <View style={styles.waveContainer} pointerEvents="none">
+              <Svg viewBox="0 0 500 150" preserveAspectRatio="none" style={styles.wave}>
+                <Path d="M0,100 C150,200 350,0 500,100 L500,0 L0,0 Z" fill="#122240" />
+              </Svg>
+              <Svg viewBox="0 0 500 150" preserveAspectRatio="none" style={[styles.wave, { position: 'absolute', top: 10 }] }>
+                <Path d="M0,80 C150,180 300,30 500,80 L500,0 L0,0 Z" stroke="rgba(255,105,180,0.28)" strokeWidth={2} fill="none" />
+              </Svg>
+            </View>
 
-            <Text style={[styles.title, { color: colors.text }]}>DeepSpectrum Analytics</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Private Limited</Text>
+            <Text style={styles.brand}>DeepSpectrum</Text>
+            <Text style={styles.brandSub}>Analytics Private Limited</Text>
+            <View style={styles.underlineGradient} />
           </View>
 
-          <View style={styles.form}>
-            {/* underline style inputs - modern, slim */}
-            <View style={[styles.underlineField, { borderBottomColor: colors.border }]}>
-              <Mail size={18} color={colors.textSecondary} />
-              <TextInput
-                style={[styles.inputUnderline, { color: colors.text }]}
-                placeholder="Email"
-                placeholderTextColor={colors.textSecondary}
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-              />
-            </View>
+          <View style={styles.formContainer}>
+            <Text style={styles.signInTitle}>Sign in</Text>
+            <View style={styles.signInUnderline} />
 
-            <View style={[styles.underlineField, { borderBottomColor: colors.border }]}>
-              <Lock size={18} color={colors.textSecondary} />
-              <TextInput
-                style={[styles.inputUnderline, { color: colors.text }]}
-                placeholder="Password"
-                placeholderTextColor={colors.textSecondary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                {showPassword ? (
-                  <EyeOff size={18} color={colors.textSecondary} />
-                ) : (
-                  <Eye size={18} color={colors.textSecondary} />
-                )}
+            <View style={styles.card}>
+              <View style={styles.inputRow}>
+                <Mail size={20} color="#ff69b4" />
+                <TextInput
+                  placeholder="Email"
+                  placeholderTextColor="#cbd5e1"
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+
+              <View style={styles.inputRow}>
+                <Lock size={20} color="#ff69b4" />
+                <TextInput
+                  placeholder="Password"
+                  placeholderTextColor="#cbd5e1"
+                  style={styles.input}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 6 }}>
+                  <Text style={{ color: '#cbd5e1' }}>{showPassword ? 'Hide' : 'Show'}</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.rowBetween}>
+                <View style={styles.rememberRow}>
+                  <TouchableOpacity style={styles.checkbox} />
+                  <Text style={styles.rememberText}>Remember me</Text>
+                </View>
+                <TouchableOpacity>
+                  <Text style={styles.forgot}>Forgot Password?</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity style={styles.signInButton} onPress={handleLogin} activeOpacity={0.9}>
+                <LinearGradient colors={["#ff69b4", "#da70d6"]} style={styles.signInButtonInner}>
+                  <Text style={styles.signInButtonText}>Sign in</Text>
+                </LinearGradient>
               </TouchableOpacity>
-            </View>
 
-            <GradientButton
-              title="Sign In"
-              onPress={handleLogin}
-              loading={loading}
-              style={styles.loginButton}
-            />
-
-            {/* biometric always visible for clarity; shows state */}
-            <TouchableOpacity onPress={handleBiometricAuth} style={styles.biometricRow} activeOpacity={0.8}>
-              <Fingerprint size={20} color={biometricAvailable ? colors.primary : colors.textSecondary} />
-              <Text style={[styles.biometricLabel, { color: biometricAvailable ? colors.primary : colors.textSecondary }]}> {biometricAvailable ? 'Use Biometric Authentication' : 'Biometric not set up'}</Text>
-            </TouchableOpacity>
-
-            {/* social sign-in options */}
-            <View style={styles.socialSection}>
-              <Text style={[styles.orText, { color: colors.textSecondary }]}>Or continue with</Text>
-              <View style={styles.socialRow}>
-                <TouchableOpacity style={[styles.socialBtn, { backgroundColor: '#fff' }]} onPress={() => Alert.alert('Google sign in', 'Not wired yet')}>
-                  <Text style={styles.socialText}>G</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.socialBtn, { backgroundColor: '#0A66C2' }]} onPress={() => Alert.alert('LinkedIn sign in', 'Not wired yet')}>
-                  <Text style={[styles.socialText, { color: '#fff' }]}>in</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.socialBtn, { backgroundColor: '#111' }]} onPress={() => Alert.alert('GitHub sign in', 'Not wired yet')}>
-                  <Text style={[styles.socialText, { color: '#fff' }]}>GH</Text>
-                </TouchableOpacity>
+              <View style={{ marginTop: 12, alignItems: 'center' }}>
+                <Text style={styles.noAccountText}>Do not have an account? <Text style={styles.signUpText}>Sign up</Text></Text>
               </View>
             </View>
           </View>
 
-          <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: colors.textSecondary }]}>AI-Enabled Multispectral Tricorder</Text>
-            <Text style={[styles.footerText, { color: colors.textSecondary }]}>for Qualitative Material Analysis</Text>
+          <View style={styles.decorative} pointerEvents="none">
+            <View style={styles.pinkBlur} />
+            <View style={styles.violetBlur} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -174,114 +155,32 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
-  logoContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  logoImage: {
-    width: 80,
-    height: 48,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  form: {
-    marginBottom: 32,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    height: 56,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  loginButton: {
-    marginTop: 8,
-  },
-  biometricButton: {
-    marginTop: 16,
-  },
-  biometricGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-  },
-  biometricText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 12,
-  },
-  underlineField: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    marginBottom: 12,
-  },
-  inputUnderline: {
-    marginLeft: 12,
-    flex: 1,
-    paddingVertical: 6,
-    fontSize: 16,
-  },
-  biometricRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
-  biometricLabel: { marginLeft: 10, fontSize: 15, fontWeight: '600' },
-  socialSection: { marginTop: 18, alignItems: 'center' },
-  orText: { marginBottom: 8 },
-  socialRow: { flexDirection: 'row', justifyContent: 'space-between', width: '80%' },
-  socialBtn: { width: 60, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  socialText: { fontSize: 16, fontWeight: '700' },
-  footer: { alignItems: 'center', marginTop: 18 },
-  footerText: { fontSize: 13, textAlign: 'center', color: '#888' },
+  container: { flex: 1, backgroundColor: '#0a192f' },
+  scrollContent: { flexGrow: 1, padding: 18, justifyContent: 'center' },
+  headerWrap: { alignItems: 'center', marginBottom: 18 },
+  waveContainer: { width: '100%', height: 120, overflow: 'hidden' },
+  wave: { width: '100%', height: '100%' },
+  brand: { fontSize: 32, fontWeight: '800', color: '#fff', marginTop: 10, backgroundClip: 'text' as any },
+  brandSub: { color: '#cbd5e1', marginTop: 4 },
+  underlineGradient: { width: 96, height: 4, borderRadius: 999, marginTop: 10, backgroundColor: '#ff69b4' },
+  formContainer: { flex: 1, paddingHorizontal: 6, maxWidth: 520, width: '100%', alignSelf: 'center' },
+  signInTitle: { fontSize: 28, fontWeight: '800', color: '#fff', textAlign: 'center' },
+  signInUnderline: { width: 64, height: 3, borderRadius: 999, backgroundColor: '#ff69b4', alignSelf: 'center', marginTop: 8, marginBottom: 14 },
+  card: { backgroundColor: 'rgba(18,34,64,0.28)', padding: 18, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,105,180,0.12)' },
+  inputRow: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)', paddingVertical: 10, marginBottom: 12 },
+  input: { marginLeft: 12, flex: 1, color: '#fff', paddingVertical: 6 },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
+  rememberRow: { flexDirection: 'row', alignItems: 'center' },
+  checkbox: { width: 18, height: 18, borderRadius: 4, borderWidth: 1, borderColor: 'rgba(255,105,180,0.4)', marginRight: 8 },
+  rememberText: { color: '#cbd5e1' },
+  forgot: { color: '#cbd5e1' },
+  signInButton: { marginTop: 14, borderRadius: 999, overflow: 'hidden' },
+  signInButtonInner: { paddingVertical: 14, alignItems: 'center' },
+  signInButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  noAccountText: { color: '#cbd5e1' },
+  signUpText: { color: '#ff69b4', fontWeight: '700' },
+  decorative: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  pinkBlur: { position: 'absolute', top: '20%', left: -40, width: 160, height: 160, backgroundColor: '#ff69b4', borderRadius: 100, opacity: 0.18, transform: [{ scale: 1 }] },
+  violetBlur: { position: 'absolute', bottom: '30%', right: -40, width: 160, height: 160, backgroundColor: '#da70d6', borderRadius: 100, opacity: 0.18 },
 });
 

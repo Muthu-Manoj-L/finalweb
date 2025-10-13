@@ -26,6 +26,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [dotsVisible, setDotsVisible] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -46,7 +47,15 @@ export default function LoginScreen() {
         promptMessage: 'Authenticate to access DeepSpectrum',
       });
       if (result.success) {
-        Alert.alert('Success', 'Biometric authentication successful');
+        // For demo mode: sign in with demo credentials when biometric succeeds
+        try {
+          setLoading(true);
+          // demo-only credentials
+          await signIn('1234', '1234');
+          router.replace('/(tabs)');
+        } finally {
+          setLoading(false);
+        }
       }
     } catch (err) {
       Alert.alert('Error', 'Biometric authentication failed');
@@ -141,6 +150,27 @@ export default function LoginScreen() {
               <View style={{ marginTop: 12, alignItems: 'center' }}>
                 <Text style={styles.noAccountText}>Do not have an account? <Text style={styles.signUpText}>Sign up</Text></Text>
               </View>
+
+              {/* Fingerprint access option (visible on mobile when available) */}
+              {biometricAvailable && (
+                <View style={{ alignItems: 'center', marginTop: 12 }}>
+                  <TouchableOpacity onPress={handleBiometricAuth} accessibilityLabel="Fingerprint sign in" style={styles.fingerprintButton} activeOpacity={0.85}>
+                    <View style={styles.fingerprintCircle}>
+                      <Fingerprint size={28} color="#ff69b4" />
+                    </View>
+                    <Text style={styles.fingerprintText}>Fingerprint Access</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Looping bouncing dots */}
+              <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
+                <View style={styles.dotsRow}>
+                  <View style={[styles.dot, { animationDelay: '0ms' }]} />
+                  <View style={[styles.dot, { animationDelay: '200ms', marginLeft: 6 }]} />
+                  <View style={[styles.dot, { animationDelay: '400ms', marginLeft: 6 }]} />
+                </View>
+              </View>
             </View>
           </View>
 
@@ -182,5 +212,10 @@ const styles = StyleSheet.create({
   decorative: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   pinkBlur: { position: 'absolute', top: '20%', left: -40, width: 160, height: 160, backgroundColor: '#ff69b4', borderRadius: 100, opacity: 0.18, transform: [{ scale: 1 }] },
   violetBlur: { position: 'absolute', bottom: '30%', right: -40, width: 160, height: 160, backgroundColor: '#da70d6', borderRadius: 100, opacity: 0.18 },
+  fingerprintButton: { alignItems: 'center' },
+  fingerprintCircle: { width: 64, height: 64, borderRadius: 999, backgroundColor: '#122240', borderWidth: 1, borderColor: 'rgba(255,105,180,0.2)', alignItems: 'center', justifyContent: 'center' },
+  fingerprintText: { color: '#cbd5e1', marginTop: 8 },
+  dotsRow: { flexDirection: 'row', alignItems: 'flex-end' },
+  dot: { width: 8, height: 8, borderRadius: 999, backgroundColor: '#ff69b4', transform: [{ translateY: 0 }] },
 });
 

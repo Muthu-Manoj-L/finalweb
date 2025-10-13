@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,42 @@ export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
   const { colors } = useTheme();
+
+  // helpers for color mixing and conversion
+  const mixColors = (c1: string, c2: string) => {
+    const hex = (h: string) => h.replace('#', '');
+    const p1 = hex(c1);
+    const p2 = hex(c2);
+    const r = Math.round((parseInt(p1.slice(0, 2), 16) + parseInt(p2.slice(0, 2), 16)) / 2);
+    const g = Math.round((parseInt(p1.slice(2, 4), 16) + parseInt(p2.slice(2, 4), 16)) / 2);
+    const b = Math.round((parseInt(p1.slice(4, 6), 16) + parseInt(p2.slice(4, 6), 16)) / 2);
+    const toHex = (v: number) => v.toString(16).padStart(2, '0');
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  };
+
+  const hexToRgba = (hex: string, alpha = 1) => {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  // Randomized decorative palette for wave fill/stroke and background blurs.
+  const decor = useMemo(() => {
+    const violet = colors.primaryGradientEnd;
+    const purpleMix = mixColors(colors.primaryGradientStart, colors.primaryGradientEnd);
+    const pink = '#ff69b4';
+    const pool = [violet, purpleMix, pink];
+    // shuffle
+    pool.sort(() => Math.random() - 0.5);
+    // assign in order; if fewer items needed than pool length, reuse
+    const waveFill = pool[0] || violet;
+    const waveStroke = pool[1] || purpleMix;
+    const blur1 = pool[2] || pink;
+    const blur2 = pool[0] || violet;
+    return { waveFill, waveStroke, blur1, blur2 };
+  }, [colors.primaryGradientStart, colors.primaryGradientEnd]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -214,10 +250,10 @@ export default function LoginScreen() {
           <View style={styles.headerWrap}>
             <View style={styles.waveContainer} pointerEvents="none">
               <Svg viewBox="0 0 500 150" preserveAspectRatio="none" style={styles.wave}>
-                <Path d="M0,100 C150,200 350,0 500,100 L500,0 L0,0 Z" fill={colors.primaryGradientEnd} />
+                <Path d="M0,100 C150,200 350,0 500,100 L500,0 L0,0 Z" fill={decor.waveFill} />
               </Svg>
               <Svg viewBox="0 0 500 150" preserveAspectRatio="none" style={[styles.wave, { position: 'absolute', top: 10 }] }>
-                <Path d="M0,80 C150,180 300,30 500,80 L500,0 L0,0 Z" stroke={`${colors.primary}28`} strokeWidth={2} fill="none" />
+                <Path d="M0,80 C150,180 300,30 500,80 L500,0 L0,0 Z" stroke={hexToRgba(decor.waveStroke, 0.28)} strokeWidth={2} fill="none" />
               </Svg>
             </View>
 
@@ -330,8 +366,8 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.decorative} pointerEvents="none">
-            <View style={[styles.pinkBlur, { backgroundColor: colors.primaryGradientStart }]} />
-            <View style={[styles.violetBlur, { backgroundColor: colors.primaryGradientEnd }]} />
+            <View style={[styles.pinkBlur, { backgroundColor: decor.blur1 }]} />
+            <View style={[styles.violetBlur, { backgroundColor: decor.blur2 }]} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

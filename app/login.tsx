@@ -250,10 +250,10 @@ export default function LoginScreen() {
           <View style={styles.headerWrap}>
             <View style={styles.waveContainer} pointerEvents="none">
               <Svg viewBox="0 0 500 150" preserveAspectRatio="none" style={styles.wave}>
-                <Path d="M0,100 C150,200 350,0 500,100 L500,0 L0,0 Z" fill={decor.waveFill} />
+                <Path d="M0,100 C150,200 350,0 500,100 L500,0 L0,0 Z" fill={hexToRgba(decor.waveFill, 0.16)} />
               </Svg>
               <Svg viewBox="0 0 500 150" preserveAspectRatio="none" style={[styles.wave, { position: 'absolute', top: 10 }] }>
-                <Path d="M0,80 C150,180 300,30 500,80 L500,0 L0,0 Z" stroke={hexToRgba(decor.waveStroke, 0.28)} strokeWidth={2} fill="none" />
+                <Path d="M0,80 C150,180 300,30 500,80 L500,0 L0,0 Z" stroke={hexToRgba(decor.waveStroke, 0.14)} strokeWidth={1.5} fill="none" />
               </Svg>
             </View>
 
@@ -366,8 +366,8 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.decorative} pointerEvents="none">
-            <View style={[styles.pinkBlur, { backgroundColor: decor.blur1 }]} />
-            <View style={[styles.violetBlur, { backgroundColor: decor.blur2 }]} />
+            <View style={[styles.pinkBlur, { backgroundColor: decor.blur1, opacity: 0.12 }]} />
+            <View style={[styles.violetBlur, { backgroundColor: decor.blur2, opacity: 0.12 }]} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

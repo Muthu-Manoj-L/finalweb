@@ -208,7 +208,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.primaryGradientStart, colors.primaryGradientEnd]} style={styles.container}>
+    <LinearGradient colors={["#0a192f", "#122240"]} style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.headerWrap}>
@@ -223,7 +223,7 @@ export default function LoginScreen() {
 
             <Text style={styles.brand}>DeepSpectrum</Text>
             <Text style={styles.brandSub}>Analytics Private Limited</Text>
-            <View style={[styles.underlineGradient, { backgroundColor: colors.primary }]} />
+            <View style={[styles.underlineGradient, { backgroundColor: '#ff69b4' }]} />
           </View>
 
           <View style={styles.formContainer}>
@@ -232,7 +232,7 @@ export default function LoginScreen() {
 
             <View style={styles.card}>
               <View style={styles.inputRow}>
-                  <Mail size={20} color={colors.primary} />
+                  <Mail size={20} color="#ff69b4" />
                 <TextInput
                   placeholder="Email"
                   placeholderTextColor="#cbd5e1"
@@ -245,7 +245,7 @@ export default function LoginScreen() {
               </View>
 
               <View style={styles.inputRow}>
-                  <Lock size={20} color={colors.primary} />
+                  <Lock size={20} color="#ff69b4" />
                 <TextInput
                   placeholder="Password"
                   placeholderTextColor="#cbd5e1"
@@ -276,7 +276,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
 
               <View style={{ marginTop: 12, alignItems: 'center' }}>
-                <Text style={styles.noAccountText}>Do not have an account? <Text style={[styles.signUpText, { color: colors.primary }]}>Sign up</Text></Text>
+                <Text style={styles.noAccountText}>Do not have an account? <Text style={[styles.signUpText, { color: '#ff69b4' }]}>Sign up</Text></Text>
               </View>
 
               {/* Fingerprint access option (visible on mobile when available) */}
@@ -285,8 +285,8 @@ export default function LoginScreen() {
                   {Platform.OS === 'web' ? (
                     <>
                       <TouchableOpacity onPress={handleWebAuthenticate} accessibilityLabel="Use fingerprint (web)" style={styles.fingerprintButton} activeOpacity={0.85}>
-                        <View style={styles.fingerprintCircle}>
-                          <Fingerprint size={28} color={colors.primary} />
+                        <View style={[styles.fingerprintCircle, { borderColor: 'rgba(255,105,180,0.2)' }]}>
+                          <Fingerprint size={28} color="#ff69b4" />
                         </View>
                         <Text style={styles.fingerprintText}>Use platform authenticator</Text>
                       </TouchableOpacity>
@@ -296,8 +296,8 @@ export default function LoginScreen() {
                     </>
                   ) : (
                     <TouchableOpacity onPress={handleBiometricAuth} accessibilityLabel="Fingerprint sign in" style={styles.fingerprintButton} activeOpacity={0.85}>
-                      <View style={styles.fingerprintCircle}>
-                        <Fingerprint size={28} color={colors.primary} />
+                      <View style={[styles.fingerprintCircle, { borderColor: 'rgba(255,105,180,0.2)' }]}>
+                        <Fingerprint size={28} color="#ff69b4" />
                       </View>
                       <Text style={styles.fingerprintText}>Fingerprint Access</Text>
                     </TouchableOpacity>
@@ -308,9 +308,9 @@ export default function LoginScreen() {
               {/* Looping bouncing dots */}
               <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
                 <View style={styles.dotsRow}>
-                  <Animated.View style={[styles.dot, { transform: [{ translateY: dot1 }], backgroundColor: colors.primary }]} />
-                  <Animated.View style={[styles.dot, { marginLeft: 6, transform: [{ translateY: dot2 }], backgroundColor: colors.primary }]} />
-                  <Animated.View style={[styles.dot, { marginLeft: 6, transform: [{ translateY: dot3 }], backgroundColor: colors.primary }]} />
+                  <Animated.View style={[styles.dot, { transform: [{ translateY: dot1 }], backgroundColor: '#ff69b4' }]} />
+                  <Animated.View style={[styles.dot, { marginLeft: 6, transform: [{ translateY: dot2 }], backgroundColor: '#ff69b4' }]} />
+                  <Animated.View style={[styles.dot, { marginLeft: 6, transform: [{ translateY: dot3 }], backgroundColor: '#ff69b4' }]} />
                 </View>
               </View>
               

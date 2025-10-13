@@ -79,7 +79,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.primaryGradientStart, colors.primaryGradientEnd]} style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
         colors={[colors.primaryGradientStart, colors.primaryGradientEnd]}
         style={styles.header}
@@ -209,7 +209,7 @@ export default function SettingsScreen() {
           />
         </View>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 

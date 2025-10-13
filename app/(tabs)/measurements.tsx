@@ -78,7 +78,7 @@ export default function MeasurementsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <LinearGradient colors={[colors.primaryGradientStart, colors.primaryGradientEnd]} style={styles.container}>
       <LinearGradient
         colors={[colors.primaryGradientStart, colors.primaryGradientEnd]}
         style={styles.header}
@@ -171,7 +171,7 @@ export default function MeasurementsScreen() {
           )}
         </View>
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 }
 

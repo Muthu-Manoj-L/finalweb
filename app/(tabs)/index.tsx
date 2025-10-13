@@ -114,7 +114,7 @@ export default function DashboardScreen() {
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <LinearGradient colors={[colors.primaryGradientStart, colors.primaryGradientEnd]} style={styles.container}>
       <LinearGradient
         colors={[colors.primaryGradientStart, colors.primaryGradientEnd]}
         style={styles.header}
@@ -193,6 +193,34 @@ export default function DashboardScreen() {
             <ChevronRight size={24} color={colors.primary} style={styles.chevron} />
           </GradientCard>
         )}
+        {/* Device / Overview (outline version) */}
+        <GradientCard gradient gradientColors={[colors.primaryGradientStart, colors.primaryGradientEnd]} style={styles.deviceCardOutline}>
+          <View style={styles.deviceHeaderOutline}>
+            <View style={[styles.deviceIconContainer, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
+              <Wifi size={24} color="#FFFFFF" />
+            </View>
+            <View style={styles.deviceInfoOutline}>
+              <Text style={styles.deviceName}>{device ? device.device_name : 'No Device'}</Text>
+              <Text style={styles.deviceStatusOutline}>{device ? (device.status === 'online' ? 'Connected' : 'Offline') : 'Not connected'}</Text>
+            </View>
+            <View style={styles.chevronPlaceholder} />
+          </View>
+
+          <View style={styles.deviceStatsOutline}>
+            <View style={styles.statOutline}>
+              <View style={styles.statBox} />
+              <Text style={[styles.statLabel, { color: colors.text }]}>Battery</Text>
+            </View>
+            <View style={styles.statOutline}>
+              <View style={styles.statBox} />
+              <Text style={[styles.statLabel, { color: colors.text }]}>Signal</Text>
+            </View>
+            <View style={styles.statOutline}>
+              <View style={styles.statBox} />
+              <Text style={[styles.statLabel, { color: colors.text }]}>Measurements</Text>
+            </View>
+          </View>
+        </GradientCard>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -208,16 +236,30 @@ export default function DashboardScreen() {
               onPress={action.onPress}
             />
           ))}
+          <View style={styles.quickActionsRow}>
+            {quickActions.map((action) => (
+              <TouchableOpacity key={action.title} style={[styles.quickActionBox, { borderColor: colors.border }]} onPress={action.onPress}>
+                <View style={[styles.quickActionIcon, { backgroundColor: 'rgba(255,255,255,0.04)' }]}>
+                  <action.icon size={20} color={colors.primary} />
+                </View>
+                <Text style={[styles.quickActionTitle, { color: colors.text }]}>{action.title}</Text>
+                <Text style={[styles.quickActionSub, { color: colors.textSecondary }]}>{action.subtitle}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Recent Activity
           </Text>
-          <GradientCard>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No recent activity
-            </Text>
+          <GradientCard style={styles.activityCardOutline}>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No recent activity</Text>
+            <View style={styles.activityPlaceholders}>
+              <View style={[styles.activityLine, { backgroundColor: 'rgba(255,255,255,0.04)' }]} />
+              <View style={[styles.activityLine, { backgroundColor: 'rgba(255,255,255,0.03)' }]} />
+              <View style={[styles.activityLine, { backgroundColor: 'rgba(255,255,255,0.02)' }]} />
+            </View>
           </GradientCard>
         </View>
       </ScrollView>
@@ -225,7 +267,7 @@ export default function DashboardScreen() {
       <CalibrationModal visible={calibrationVisible} onClose={() => setCalibrationVisible(false)} />
       <MeasurementModal visible={measurementVisible} onClose={() => setMeasurementVisible(false)} />
       <WidgetModal visible={widgetVisible} widget={activeWidget} onClose={() => { setWidgetVisible(false); setActiveWidget(null); }} />
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -353,4 +395,40 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
   },
+  /* Outline / placeholder styles for redesigned dashboard */
+  deviceCardOutline: {
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 14,
+  },
+  deviceHeaderOutline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  deviceInfoOutline: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  deviceStatusOutline: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  chevronPlaceholder: { width: 36 },
+  deviceStatsOutline: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  statOutline: { alignItems: 'center', flex: 1 },
+  statBox: { width: 72, height: 48, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.03)' },
+  quickActionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  quickActionBox: { flex: 1, minWidth: 140, padding: 12, borderWidth: 1, borderRadius: 10, backgroundColor: 'transparent' },
+  quickActionIcon: { width: 36, height: 36, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  quickActionTitle: { fontSize: 14, fontWeight: '600' },
+  quickActionSub: { fontSize: 12, marginTop: 4 },
+  activityCardOutline: { padding: 12, borderRadius: 12 },
+  activityPlaceholders: { marginTop: 12 },
+  activityLine: { height: 12, borderRadius: 6, marginBottom: 8 },
 });

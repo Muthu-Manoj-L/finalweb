@@ -18,27 +18,77 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
   const { colors } = useTheme();
   const title = widget || 'Demo Widget';
   const isRealTime = /real-time|real time|live/i.test(title);
+  const isProximityWidget = /proximity/i.test(title);
   const isRecorded = /recorded|previous|history|data/i.test(title);
 
-  // Real-time data stream
+  // Real-time data stream (used for generic and proximity)
   const [streamData, setStreamData] = useState<number[]>(() => Array.from({ length: 40 }, (_, i) => generatePoint(i)));
   const intervalRef = useRef<number | null>(null);
+  const proximityIntervalRef = useRef<number | null>(null);
+  const [proximityAvailable, setProximityAvailable] = useState<boolean>(false);
+  const [proximityValue, setProximityValue] = useState<number | null>(null);
 
   useEffect(() => {
     if (visible && isRealTime) {
-      // start fake stream
-      intervalRef.current = setInterval(() => {
-        setStreamData((prev) => {
-          const next = prev.slice(1);
-          next.push(generatePoint(Date.now() / 1000));
-          return next;
-        });
-      }, 600) as unknown as number;
+      if (isProximityWidget) {
+        // Try to dynamically load a proximity native module if available
+        let Prox: any = null;
+        try {
+          // require may fail on platforms without the module; catch and fallback
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          Prox = require('react-native-proximity');
+        } catch (e) {
+          Prox = null;
+        }
+
+        if (Prox && typeof Prox.addListener === 'function') {
+          setProximityAvailable(true);
+          const handler = (data: any) => {
+            // react-native-proximity typically returns { proximity: boolean, distance?: number }
+            const v = typeof data.distance === 'number' ? data.distance : (data.proximity ? 0 : 100);
+            setProximityValue(v);
+            setStreamData((prev) => {
+              const next = prev.slice(1);
+              next.push(Math.round(v));
+              return next;
+            });
+          };
+          Prox.addListener(handler);
+
+          return () => {
+            try { Prox.removeListener && Prox.removeListener(); } catch (e) {}
+            setProximityAvailable(false);
+          };
+        }
+
+        // fallback: simulate proximity readings
+        setProximityAvailable(false);
+        proximityIntervalRef.current = setInterval(() => {
+          const simulated = Math.random() > 0.6 ? 0 : Math.round(20 + Math.random() * 80);
+          setProximityValue(simulated);
+          setStreamData((prev) => {
+            const next = prev.slice(1);
+            next.push(simulated);
+            return next;
+          });
+        }, 500) as unknown as number;
+      } else {
+        // generic real-time fake stream
+        intervalRef.current = setInterval(() => {
+          setStreamData((prev) => {
+            const next = prev.slice(1);
+            next.push(generatePoint(Date.now() / 1000));
+            return next;
+          });
+        }, 600) as unknown as number;
+      }
     }
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current as unknown as number);
       intervalRef.current = null;
+      if (proximityIntervalRef.current) clearInterval(proximityIntervalRef.current as unknown as number);
+      proximityIntervalRef.current = null;
     };
   }, [visible, isRealTime]);
 
@@ -78,9 +128,9 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
                 </View>
 
                 <View style={styles.rtSide}>
-                  <Text style={[styles.panelTitle, { color: colors.text }]}>Current</Text>
-                  <Text style={[styles.currentValue, { color: colors.primary }]}>{streamData[streamData.length - 1]} AU</Text>
-                  <Text style={[styles.panelLabel, { color: colors.textSecondary }]}>Integration: 100 ms</Text>
+                  <Text style={[styles.panelTitle, { color: colors.text }]}>{isProximityWidget ? 'Proximity' : 'Current'}</Text>
+                  <Text style={[styles.currentValue, { color: colors.primary }]}>{isProximityWidget ? (proximityValue === null ? '—' : `${proximityValue} cm`) : `${streamData[streamData.length - 1]} AU`}</Text>
+                  <Text style={[styles.panelLabel, { color: colors.textSecondary }]}>{isProximityWidget ? 'Source: phone sensor (demo if unavailable)' : 'Integration: 100 ms'}</Text>
 
                   <View style={styles.qualityBox}>
                     <Text style={{ color: colors.text }}>Transfer Quality</Text>

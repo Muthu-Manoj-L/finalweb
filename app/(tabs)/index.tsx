@@ -109,8 +109,21 @@ export default function DashboardScreen() {
       title: 'Real-Time',
       subtitle: 'Live spectral view',
       icon: Activity,
-      onPress: () => { setActiveWidget('Real-Time Spectral'); setWidgetVisible(true); },
+      onPress: () => {
+        // If the currently selected device is a proximity sensor, open the proximity real-time widget
+        if (device && device.id?.startsWith('proximity')) {
+          setActiveWidget('Real-Time Proximity');
+        } else {
+          setActiveWidget('Real-Time Spectral');
+        }
+        setWidgetVisible(true);
+      },
     },
+  ];
+
+  const availableDevices = [
+    { id: 'proximity:local', device_name: 'Phone proximity sensor', status: 'online', battery_level: 100, signal_strength: 100, last_connected: new Date().toISOString() },
+    // you can append real remote devices from supabase/devices table here
   ];
 
   return (
@@ -182,15 +195,22 @@ export default function DashboardScreen() {
             </View>
           </GradientCard>
         ) : (
-          <GradientCard style={styles.noDeviceCard} onPress={() => router.push('/device-connection')}>
+          <GradientCard style={styles.noDeviceCard}>
             <Wifi size={40} color={colors.primary} />
-            <Text style={[styles.noDeviceText, { color: colors.text }]}>
-              No Device Connected
-            </Text>
-            <Text style={[styles.noDeviceSubtext, { color: colors.textSecondary }]}>
-              Tap to connect your spectrometer
-            </Text>
-            <ChevronRight size={24} color={colors.primary} style={styles.chevron} />
+            <Text style={[styles.noDeviceText, { color: colors.text }]}>No Device Connected</Text>
+            <Text style={[styles.noDeviceSubtext, { color: colors.textSecondary }]}>Select a device from the list below</Text>
+
+            {availableDevices.map((d) => (
+              <TouchableOpacity key={d.id} style={{ marginTop: 10 }} onPress={() => setDevice(d as DeviceStatus)}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Wifi size={20} color={colors.primary} />
+                    <Text style={{ color: colors.text, marginLeft: 8 }}>{d.device_name}</Text>
+                  </View>
+                  <Text style={{ color: colors.textSecondary }}>{d.status}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
           </GradientCard>
         )}
 

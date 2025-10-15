@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, AppState, AppStateStatus, Linking } from 'react-native';
 import Svg, { Rect, Path, Circle, Text as SvgText } from 'react-native-svg';
+import * as ExpoCamera from 'expo-camera';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface Props {
@@ -27,9 +28,132 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
   const proximityIntervalRef = useRef<number | null>(null);
   const [proximityAvailable, setProximityAvailable] = useState<boolean>(false);
   const [proximityValue, setProximityValue] = useState<number | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [permissionInfo, setPermissionInfo] = useState<any>(null);
+  const cameraRef = useRef<any>(null);
+  const appState = useRef<AppStateStatus>(AppState.currentState as AppStateStatus);
+
+  // Resolve Camera component safely — some bundlers export the Camera as a module object with .default
+  const CameraComponentCandidate: any = (ExpoCamera as any).Camera;
+  let CameraComponent: any = null;
+  let cameraResolutionInfo = 'none';
+  try {
+    if (typeof CameraComponentCandidate === 'function') {
+      CameraComponent = CameraComponentCandidate;
+      cameraResolutionInfo = 'function:direct';
+    } else if (CameraComponentCandidate && typeof CameraComponentCandidate === 'object') {
+      // try common shapes
+      if (typeof CameraComponentCandidate.default === 'function') {
+        CameraComponent = CameraComponentCandidate.default;
+        cameraResolutionInfo = 'object.default:function';
+      } else if (typeof CameraComponentCandidate.Camera === 'function') {
+        CameraComponent = CameraComponentCandidate.Camera;
+        cameraResolutionInfo = 'object.Camera:function';
+      } else if (CameraComponentCandidate.default && typeof CameraComponentCandidate.default.Camera === 'function') {
+        CameraComponent = CameraComponentCandidate.default.Camera;
+        cameraResolutionInfo = 'object.default.Camera:function';
+      } else {
+        // not a function — log keys for debugging
+        cameraResolutionInfo = 'object:keys=' + Object.keys(CameraComponentCandidate).join(',');
+      }
+    }
+  } catch (e) {
+    cameraResolutionInfo = 'resolve-error:' + String(e);
+  }
+
+  // debug: log types that might be invalid for rendering
+  // eslint-disable-next-line no-console
+  console.debug('WidgetModal render debug', {
+    CameraComponentType: CameraComponent ? (typeof CameraComponent) : typeof CameraComponentCandidate,
+    cameraResolutionInfo,
+    ExpoCameraCameraType: typeof CameraComponentCandidate,
+    permissionInfo,
+    isRealTime,
+    title,
+  });
+
+  // Simple error boundary to catch render errors inside this modal and show a fallback UI
+  class InnerErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: Error | null; info?: any }> {
+    constructor(props: any) {
+      super(props);
+      this.state = { error: null };
+    }
+    componentDidCatch(error: Error, info: any) {
+      // store error for display
+      // build a summary of direct child types for debugging
+      const summarize = (children: React.ReactNode) => {
+        const types: string[] = [];
+        React.Children.forEach(children, (child: any) => {
+          if (!child) { types.push(String(child)); return; }
+          const t = child.type;
+          if (typeof t === 'string') types.push(t);
+          else if (typeof t === 'function') types.push(t.displayName || t.name || 'FunctionComponent');
+          else if (typeof t === 'object') {
+            // try to inspect common shapes
+            if (t && (t.$$typeof || t.default)) types.push('ModuleObject');
+            else types.push('Object');
+          } else types.push(String(typeof t));
+        });
+        return types.join(', ');
+      };
+
+      let childSummary: string | undefined;
+      try { childSummary = summarize(this.props.children); } catch (_) { childSummary = undefined; }
+
+      this.setState({ error, info: { ...info, childSummary } });
+      // also log to console so Metro shows it
+      // eslint-disable-next-line no-console
+      console.error('WidgetModal render error:', error, info);
+    }
+    render() {
+      if (this.state.error) {
+        return (
+          <View style={{ padding: 12 }}>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>Widget error</Text>
+            <Text style={{ color: colors.textSecondary, marginTop: 8 }}>{String(this.state.error.message)}</Text>
+            <Text style={{ color: colors.textSecondary, marginTop: 8, fontSize: 12 }}>{this.state.info?.componentStack}</Text>
+            {this.state.info?.childSummary ? (
+              <Text style={{ color: colors.textSecondary, marginTop: 8, fontSize: 12 }}>Child types: {this.state.info.childSummary}</Text>
+            ) : null}
+            <TouchableOpacity onPress={() => this.setState({ error: null, info: undefined })} style={{ marginTop: 8 }}>
+              <Text style={{ color: colors.primary }}>Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+        );
+      }
+      return this.props.children as any;
+    }
+  }
 
   useEffect(() => {
     if (visible && isRealTime) {
+      // Request camera permissions when opening real-time widgets
+      (async () => {
+        const check = async () => {
+          try {
+            let res: any = null;
+            if ((ExpoCamera as any).requestCameraPermissionsAsync) {
+              res = await (ExpoCamera as any).requestCameraPermissionsAsync();
+            } else if ((ExpoCamera as any).requestPermissionsAsync) {
+              res = await (ExpoCamera as any).requestPermissionsAsync();
+            } else if ((ExpoCamera as any).useCameraPermissions) {
+              // hooks-based API — call getCameraPermissionsAsync as fallback
+              res = await (ExpoCamera as any).getCameraPermissionsAsync();
+            } else if ((ExpoCamera as any).getCameraPermissionsAsync) {
+              res = await (ExpoCamera as any).getCameraPermissionsAsync();
+            }
+            if (res) {
+              setPermissionInfo(res);
+              setHasCameraPermission(res.status === 'granted');
+            }
+          } catch (e) {
+            setPermissionInfo(null);
+            setHasCameraPermission(false);
+          }
+        };
+
+        await check();
+      })();
       if (isProximityWidget) {
         // Require a native proximity module to be present at runtime.
         let Prox: any = null;
@@ -50,6 +174,9 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
         setProximityAvailable(true);
         const handler = (data: any) => {
           const v = typeof data.distance === 'number' ? data.distance : (data.proximity ? 0 : 100);
+          // debug proximity events so Metro logs show raw data and resolved value
+          // eslint-disable-next-line no-console
+          console.debug('Proximity event', { raw: data, value: v });
           setProximityValue(v);
           setStreamData((prev) => {
             const next = prev.slice(1);
@@ -57,10 +184,31 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
             return next;
           });
         };
-        Prox.addListener(handler);
+        // Register listener using common API shapes. Some packages expose addListener(handler)
+        // others expose addEventListener(eventName, handler).
+        try {
+          if (typeof Prox.addListener === 'function') {
+            Prox.addListener(handler);
+          } else if (typeof Prox.addEventListener === 'function') {
+            // some implementations require an event name
+            try { Prox.addEventListener('proximity', handler); } catch (e) { Prox.addEventListener(handler); }
+          }
+        } catch (e) {
+          // swallow registration errors but keep availability flag set to false in that case
+          // eslint-disable-next-line no-console
+          console.warn('Failed to register proximity listener', e);
+        }
 
         return () => {
-          try { Prox.removeListener && Prox.removeListener(); } catch (e) {}
+          try {
+            if (typeof Prox.removeListener === 'function') {
+              try { Prox.removeListener(handler); } catch (e) { /* fallback to no-arg */ Prox.removeListener(); }
+            } else if (typeof Prox.removeEventListener === 'function') {
+              try { Prox.removeEventListener('proximity', handler); } catch (e) { Prox.removeEventListener(handler); }
+            }
+          } catch (e) {
+            // ignore
+          }
           setProximityAvailable(false);
           setProximityValue(null);
         };
@@ -82,6 +230,37 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
     };
   }, [visible, isRealTime]);
 
+  // Re-check camera permission when app returns to foreground.
+  useEffect(() => {
+    const handleAppStateChange = (next: AppStateStatus) => {
+      // when coming to active from background/inactive -> re-check
+      if (appState.current && appState.current.match(/inactive|background/) && next === 'active') {
+        if (visible && isRealTime && /camera/i.test(title)) {
+          (async () => {
+              try {
+                let res: any = null;
+                if ((ExpoCamera as any).getCameraPermissionsAsync) {
+                  res = await (ExpoCamera as any).getCameraPermissionsAsync();
+                } else if ((ExpoCamera as any).getPermissionsAsync) {
+                  res = await (ExpoCamera as any).getPermissionsAsync();
+                }
+                if (res) {
+                  setPermissionInfo(res);
+                  if (res.status === 'granted') setHasCameraPermission(true);
+                }
+              } catch (e) {
+                // ignore
+              }
+          })();
+        }
+      }
+      appState.current = next;
+    };
+
+    const sub = AppState.addEventListener('change', handleAppStateChange);
+    return () => sub.remove();
+  }, [visible, isRealTime, title]);
+
   // Recorded data sample
   const recordedSample = useMemo(() => {
     return Array.from({ length: 30 }, (_, i) => ({ id: String(i + 1), x: i + 1, y: Math.round(30 + 70 * Math.abs(Math.sin(i / 4))) }));
@@ -99,23 +278,93 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
     <Modal visible={visible} transparent animationType="fade">
       <View style={[styles.backdrop, { backgroundColor: (colors.background === '#0F172A' ? 'rgba(3,6,15,0.75)' : 'rgba(255,255,255,0.6)') }]}>
         <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.primary + '55' }]}> 
-          <View style={styles.headerRow}>
+          <InnerErrorBoundary>
+            <View style={styles.headerRow}>
             <View style={[styles.neon, { backgroundColor: colors.primary + 'DD' }]} />
             <Text style={[styles.title, { color: colors.text, marginTop: 8 }]}>{title}</Text>
             <TouchableOpacity onPress={onClose}>
               <Text style={{ color: colors.primary }}>Close</Text>
             </TouchableOpacity>
-          </View>
+            </View>
 
           {isRealTime ? (
             <>
-              <View style={styles.realTimeRow}>
-                <View style={styles.graphArea}>
-                  <Svg width="100%" height={140} viewBox="0 0 300 140">
-                    <Rect x="0" y="0" width="300" height="140" rx="8" fill={colors.surface} />
-                    <Path d={pathFromData(streamData)} stroke={colors.primary} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
-                </View>
+                      <View style={styles.realTimeRow}>
+                        <View style={styles.graphArea}>
+                          {/* Camera preview for camera real-time widget */}
+                          { /camera/i.test(title) || /camera/i.test(widget || '') ? (
+                              hasCameraPermission === false ? (
+                                <View style={{ width: '100%', height: 140, justifyContent: 'center', alignItems: 'center' }}>
+                                  <Text style={{ color: colors.text }}>Camera permission denied</Text>
+                                  <TouchableOpacity onPress={async () => {
+                                    try {
+                                      // Try to actively request permission again if the API exists
+                                      if ((ExpoCamera as any).requestCameraPermissionsAsync) {
+                                        const r = await (ExpoCamera as any).requestCameraPermissionsAsync();
+                                        if (r?.status === 'granted') { setHasCameraPermission(true); return; }
+                                      } else if ((ExpoCamera as any).requestPermissionsAsync) {
+                                        const r = await (ExpoCamera as any).requestPermissionsAsync();
+                                        if (r?.status === 'granted') { setHasCameraPermission(true); return; }
+                                      }
+
+                                      // If still not granted, open system settings as a fallback so user can enable manually
+                                      try {
+                                        await Linking.openSettings();
+                                      } catch (openErr) {
+                                        // Some environments/platforms may not support Linking.openSettings()
+                                        // attempt Expo Camera openSettings if available
+                                        try { await (ExpoCamera as any).openSettings?.(); } catch (_) { /* ignore */ }
+                                      }
+                                    } catch (e) {
+                                      // ignore failures — user can still open settings manually
+                                    }
+                                  }} style={{ marginTop: 8 }}>
+                                    <Text style={{ color: colors.primary }}>Retry / Open Settings</Text>
+                                  </TouchableOpacity>
+
+                                    {/* debug area: show raw permission info and allow manual refresh */}
+                                    <View style={{ marginTop: 10, alignItems: 'center' }}>
+                                      <TouchableOpacity onPress={async () => {
+                                        try {
+                                          let res: any = null;
+                                          if ((ExpoCamera as any).getCameraPermissionsAsync) {
+                                            res = await (ExpoCamera as any).getCameraPermissionsAsync();
+                                          } else if ((ExpoCamera as any).getPermissionsAsync) {
+                                            res = await (ExpoCamera as any).getPermissionsAsync();
+                                          }
+                                          if (res) { setPermissionInfo(res); setHasCameraPermission(res.status === 'granted'); }
+                                        } catch (e) {}
+                                      }} style={{ marginTop: 6 }}>
+                                        <Text style={{ color: colors.primary }}>Refresh status</Text>
+                                      </TouchableOpacity>
+                                      {permissionInfo ? (
+                             <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 6 }}>{(() => {
+                              try { return JSON.stringify(permissionInfo); } catch (e) { return String(permissionInfo); }
+                             })()}</Text>
+                                      ) : null}
+                                    </View>
+                                </View>
+                              ) : (
+                                <View style={{ width: '100%', height: 140, borderRadius: 8, overflow: 'hidden' }}>
+                                  {CameraComponent ? (
+                                    // render using JSX to avoid passing module objects to React
+                                    // CameraComponent may be a function or a class
+                                    // eslint-disable-next-line react/jsx-props-no-spreading
+                                    <CameraComponent ref={cameraRef} style={{ flex: 1 }} ratio="16:9" />
+                                  ) : (
+                                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                      <Text style={{ color: colors.textSecondary }}>Camera component unavailable on this build</Text>
+                                    </View>
+                                  )}
+                                </View>
+                              )
+                          ) : (
+                            <Svg width="100%" height={140} viewBox="0 0 300 140">
+                              <Rect x="0" y="0" width="300" height="140" rx="8" fill={colors.surface} />
+                              <Path d={pathFromData(streamData)} stroke={colors.primary} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                            </Svg>
+                          )}
+                        </View>
 
                 <View style={styles.rtSide}>
                   <Text style={[styles.panelTitle, { color: colors.text }]}>{isProximityWidget ? 'Proximity' : 'Current'}</Text>
@@ -225,6 +474,7 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Preview content for this widget.</Text>
             </View>
           )}
+          </InnerErrorBoundary>
         </View>
       </View>
     </Modal>

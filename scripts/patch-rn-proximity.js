@@ -45,3 +45,27 @@ try {
   console.error('Failed to patch react-native-proximity:', err);
   process.exit(1);
 }
+
+// Also patch java source to replace android.support.annotation with androidx.annotation
+try {
+  const javaPath = path.resolve(__dirname, '..', 'node_modules', 'react-native-proximity', 'android', 'src', 'main', 'java');
+  const walk = (dir) => {
+    fs.readdirSync(dir).forEach((file) => {
+      const full = path.join(dir, file);
+      const stat = fs.statSync(full);
+      if (stat.isDirectory()) return walk(full);
+      if (full.endsWith('.java')) {
+        let content = fs.readFileSync(full, 'utf8');
+        const replaced = content.replace(/import android\.support\.annotation\./g, 'import androidx.annotation.');
+        if (replaced !== content) {
+          fs.writeFileSync(full + '.bak', content, 'utf8');
+          fs.writeFileSync(full, replaced, 'utf8');
+          console.log('Patched', full);
+        }
+      }
+    });
+  };
+  walk(javaPath);
+} catch (e) {
+  // non-fatal
+}

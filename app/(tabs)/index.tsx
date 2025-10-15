@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -28,6 +29,8 @@ import { CircularProgress } from '@/components/CircularProgress';
 import { CalibrationModal } from '@/components/CalibrationModal';
 import { MeasurementModal } from '@/components/MeasurementModal';
 import { WidgetModal } from '@/components/WidgetModal';
+import { DevicePickerModal } from '@/components/DevicePickerModal';
+import * as ExpoCamera from 'expo-camera';
 import { supabase } from '@/lib/supabase';
 import { FRONTEND_ONLY } from '@/contexts/AuthContext';
 
@@ -51,6 +54,7 @@ export default function DashboardScreen() {
   const [activeWidget, setActiveWidget] = useState<string | null>(null);
 
   const [device, setDevice] = useState<DeviceStatus | null>(null);
+  const [pickerVisible, setPickerVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [measurementCount, setMeasurementCount] = useState(0);
 
@@ -201,7 +205,7 @@ export default function DashboardScreen() {
             <Text style={[styles.noDeviceSubtext, { color: colors.textSecondary }]}>Select a device from the list below</Text>
 
             {availableDevices.map((d) => (
-              <TouchableOpacity key={d.id} style={{ marginTop: 10 }} onPress={() => setDevice(d as DeviceStatus)}>
+              <TouchableOpacity key={d.id} style={{ marginTop: 10 }} onPress={() => setPickerVisible(true)}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Wifi size={20} color={colors.primary} />
@@ -213,6 +217,16 @@ export default function DashboardScreen() {
             ))}
           </GradientCard>
         )}
+
+        <DevicePickerModal visible={pickerVisible} onClose={() => setPickerVisible(false)} onSelect={(d) => {
+          // On selection, immediately set the device and open the camera widget for camera devices.
+          const ds: DeviceStatus = { id: d.id, device_name: d.device_name, status: 'online', battery_level: 100, signal_strength: 100, last_connected: new Date().toISOString() };
+          setDevice(ds);
+          if (d.id && d.id.startsWith('camera')) {
+            setActiveWidget('Real-Time Camera');
+            setWidgetVisible(true);
+          }
+        }} />
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>

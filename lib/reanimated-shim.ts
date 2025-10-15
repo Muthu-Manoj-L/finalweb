@@ -4,38 +4,34 @@
 
 type AnyModule = any;
 
-function tryRequire(name: string): AnyModule | null {
-  try {
-    // eslint-disable-next-line global-require, import/no-dynamic-require
-    return require(name);
-  } catch (e) {
-    return null;
-  }
+const noop = () => null;
+
+// Static requires so Metro can statically analyze dependencies
+let reanimated: AnyModule | null = null;
+try {
+  // eslint-disable-next-line global-require
+  reanimated = require('react-native-reanimated');
+} catch (e) {
+  reanimated = null;
 }
 
-const reanimated = tryRequire('react-native-reanimated');
+// static require for react-native
+const ReactNative = require('react-native');
 
-if (reanimated) {
-  // Re-export everything from the real module (ES module interop)
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const mod = reanimated;
-  exports.default = mod.default || mod;
-  Object.keys(mod).forEach((k) => {
-    if (k !== 'default') exports[k] = mod[k];
-  });
-} else {
-  // Minimal no-op replacements for APIs the app uses (Animated + FadeIn/FadeOut)
-  const noop = () => null;
+// Shim default Animated-like object
+const ShimDefault = {
+  View: ReactNative.View,
+  Text: ReactNative.Text,
+};
 
-  const shimDefault = {
-    // Animated component replacement (fall back to plain react-native View/Text)
-    View: require('react-native').View,
-    Text: require('react-native').Text,
-  };
+const defaultExport = reanimated ? (reanimated.default || reanimated) : ShimDefault;
+const FadeInExport = reanimated && reanimated.FadeIn ? reanimated.FadeIn : (noop as any);
+const FadeOutExport = reanimated && reanimated.FadeOut ? reanimated.FadeOut : (noop as any);
+const useSharedValueExport = reanimated && reanimated.useSharedValue ? reanimated.useSharedValue : (() => ({ value: 0 }));
+const withTimingExport = reanimated && reanimated.withTiming ? reanimated.withTiming : ((v: any) => v);
 
-  exports.default = shimDefault;
-  exports.FadeIn = noop;
-  exports.FadeOut = noop;
-  exports.useSharedValue = () => ({ value: 0 });
-  exports.withTiming = (v: any) => v;
-}
+export default defaultExport as any;
+export const FadeIn = FadeInExport as any;
+export const FadeOut = FadeOutExport as any;
+export const useSharedValue = useSharedValueExport as any;
+export const withTiming = withTimingExport as any;

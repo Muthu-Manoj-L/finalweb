@@ -45,6 +45,7 @@ try {
   console.error('Failed to patch react-native-proximity:', err);
   process.exit(1);
 }
+<<<<<<< HEAD
 
 // Also patch java source to replace android.support.annotation with androidx.annotation
 try {
@@ -69,3 +70,5 @@ try {
 } catch (e) {
   // non-fatal
 }
+=======
+>>>>>>> origin/main

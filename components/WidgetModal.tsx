@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
+<<<<<<< HEAD
 import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, AppState, AppStateStatus, Linking } from 'react-native';
 import Svg, { Rect, Path, Circle, Text as SvgText } from 'react-native-svg';
 import * as ExpoCamera from 'expo-camera';
+=======
+import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
+import Svg, { Rect, Path, Circle, Text as SvgText } from 'react-native-svg';
+>>>>>>> origin/main
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface Props {
@@ -28,6 +33,7 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
   const proximityIntervalRef = useRef<number | null>(null);
   const [proximityAvailable, setProximityAvailable] = useState<boolean>(false);
   const [proximityValue, setProximityValue] = useState<number | null>(null);
+<<<<<<< HEAD
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [permissionInfo, setPermissionInfo] = useState<any>(null);
   const cameraRef = useRef<any>(null);
@@ -154,6 +160,11 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
 
         await check();
       })();
+=======
+
+  useEffect(() => {
+    if (visible && isRealTime) {
+>>>>>>> origin/main
       if (isProximityWidget) {
         // Require a native proximity module to be present at runtime.
         let Prox: any = null;
@@ -174,9 +185,12 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
         setProximityAvailable(true);
         const handler = (data: any) => {
           const v = typeof data.distance === 'number' ? data.distance : (data.proximity ? 0 : 100);
+<<<<<<< HEAD
           // debug proximity events so Metro logs show raw data and resolved value
           // eslint-disable-next-line no-console
           console.debug('Proximity event', { raw: data, value: v });
+=======
+>>>>>>> origin/main
           setProximityValue(v);
           setStreamData((prev) => {
             const next = prev.slice(1);
@@ -184,6 +198,7 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
             return next;
           });
         };
+<<<<<<< HEAD
         // Register listener using common API shapes. Some packages expose addListener(handler)
         // others expose addEventListener(eventName, handler).
         try {
@@ -209,6 +224,12 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
           } catch (e) {
             // ignore
           }
+=======
+        Prox.addListener(handler);
+
+        return () => {
+          try { Prox.removeListener && Prox.removeListener(); } catch (e) {}
+>>>>>>> origin/main
           setProximityAvailable(false);
           setProximityValue(null);
         };
@@ -230,6 +251,7 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
     };
   }, [visible, isRealTime]);
 
+<<<<<<< HEAD
   // Re-check camera permission when app returns to foreground.
   useEffect(() => {
     const handleAppStateChange = (next: AppStateStatus) => {
@@ -261,6 +283,8 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
     return () => sub.remove();
   }, [visible, isRealTime, title]);
 
+=======
+>>>>>>> origin/main
   // Recorded data sample
   const recordedSample = useMemo(() => {
     return Array.from({ length: 30 }, (_, i) => ({ id: String(i + 1), x: i + 1, y: Math.round(30 + 70 * Math.abs(Math.sin(i / 4))) }));
@@ -278,13 +302,18 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
     <Modal visible={visible} transparent animationType="fade">
       <View style={[styles.backdrop, { backgroundColor: (colors.background === '#0F172A' ? 'rgba(3,6,15,0.75)' : 'rgba(255,255,255,0.6)') }]}>
         <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.primary + '55' }]}> 
+<<<<<<< HEAD
           <InnerErrorBoundary>
             <View style={styles.headerRow}>
+=======
+          <View style={styles.headerRow}>
+>>>>>>> origin/main
             <View style={[styles.neon, { backgroundColor: colors.primary + 'DD' }]} />
             <Text style={[styles.title, { color: colors.text, marginTop: 8 }]}>{title}</Text>
             <TouchableOpacity onPress={onClose}>
               <Text style={{ color: colors.primary }}>Close</Text>
             </TouchableOpacity>
+<<<<<<< HEAD
             </View>
 
           {isRealTime ? (
@@ -365,6 +394,19 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
                             </Svg>
                           )}
                         </View>
+=======
+          </View>
+
+          {isRealTime ? (
+            <>
+              <View style={styles.realTimeRow}>
+                <View style={styles.graphArea}>
+                  <Svg width="100%" height={140} viewBox="0 0 300 140">
+                    <Rect x="0" y="0" width="300" height="140" rx="8" fill={colors.surface} />
+                    <Path d={pathFromData(streamData)} stroke={colors.primary} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                </View>
+>>>>>>> origin/main
 
                 <View style={styles.rtSide}>
                   <Text style={[styles.panelTitle, { color: colors.text }]}>{isProximityWidget ? 'Proximity' : 'Current'}</Text>
@@ -474,7 +516,10 @@ export function WidgetModal({ visible, widget, onClose }: Props) {
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Preview content for this widget.</Text>
             </View>
           )}
+<<<<<<< HEAD
           </InnerErrorBoundary>
+=======
+>>>>>>> origin/main
         </View>
       </View>
     </Modal>

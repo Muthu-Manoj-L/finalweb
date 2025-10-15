@@ -11,7 +11,11 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Wifi, WifiOff, Signal, Battery, CheckCircle, XCircle, RefreshCw } from 'lucide-react-native';
+<<<<<<< HEAD
 import Animated, { FadeIn, FadeOut } from '@/lib/reanimated-shim';
+=======
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+>>>>>>> origin/main
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { GradientButton } from '@/components/GradientButton';

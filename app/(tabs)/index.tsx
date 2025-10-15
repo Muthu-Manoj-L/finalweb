@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+<<<<<<< HEAD
 import { Alert, Linking } from 'react-native';
+=======
+>>>>>>> origin/main
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -29,8 +32,11 @@ import { CircularProgress } from '@/components/CircularProgress';
 import { CalibrationModal } from '@/components/CalibrationModal';
 import { MeasurementModal } from '@/components/MeasurementModal';
 import { WidgetModal } from '@/components/WidgetModal';
+<<<<<<< HEAD
 import { DevicePickerModal } from '@/components/DevicePickerModal';
 import * as ExpoCamera from 'expo-camera';
+=======
+>>>>>>> origin/main
 import { supabase } from '@/lib/supabase';
 import { FRONTEND_ONLY } from '@/contexts/AuthContext';
 
@@ -54,7 +60,10 @@ export default function DashboardScreen() {
   const [activeWidget, setActiveWidget] = useState<string | null>(null);
 
   const [device, setDevice] = useState<DeviceStatus | null>(null);
+<<<<<<< HEAD
   const [pickerVisible, setPickerVisible] = useState(false);
+=======
+>>>>>>> origin/main
   const [refreshing, setRefreshing] = useState(false);
   const [measurementCount, setMeasurementCount] = useState(0);
 
@@ -205,7 +214,11 @@ export default function DashboardScreen() {
             <Text style={[styles.noDeviceSubtext, { color: colors.textSecondary }]}>Select a device from the list below</Text>
 
             {availableDevices.map((d) => (
+<<<<<<< HEAD
               <TouchableOpacity key={d.id} style={{ marginTop: 10 }} onPress={() => setPickerVisible(true)}>
+=======
+              <TouchableOpacity key={d.id} style={{ marginTop: 10 }} onPress={() => setDevice(d as DeviceStatus)}>
+>>>>>>> origin/main
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Wifi size={20} color={colors.primary} />
@@ -218,6 +231,7 @@ export default function DashboardScreen() {
           </GradientCard>
         )}
 
+<<<<<<< HEAD
         <DevicePickerModal visible={pickerVisible} onClose={() => setPickerVisible(false)} onSelect={(d) => {
           // On selection, immediately set the device and open the camera widget for camera devices.
           const ds: DeviceStatus = { id: d.id, device_name: d.device_name, status: 'online', battery_level: 100, signal_strength: 100, last_connected: new Date().toISOString() };
@@ -228,6 +242,8 @@ export default function DashboardScreen() {
           }
         }} />
 
+=======
+>>>>>>> origin/main
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Quick Actions

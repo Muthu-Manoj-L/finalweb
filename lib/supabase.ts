@@ -1,13 +1,22 @@
+<<<<<<< HEAD
+=======
+import { createClient } from '@supabase/supabase-js';
+>>>>>>> origin/main
 import 'react-native-url-polyfill/auto';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
+<<<<<<< HEAD
 // Detect web at runtime. When running on web, avoid importing '@supabase/supabase-js'
 // because it dynamically imports `@supabase/node-fetch` which is node-only and
 // breaks the web bundler. On native or node environments, require the package.
 const isWeb = typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.product === 'ReactNative' ? false : typeof window !== 'undefined';
 
+=======
+// If environment variables are not set (e.g., on Netlify before configuration),
+// export a safe shim that provides the minimal client interface used by the app.
+>>>>>>> origin/main
 let supabase: any;
 
 if (!supabaseUrl || !supabaseAnonKey) {
@@ -23,6 +32,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
       signOut: async () => ({ data: null, error: null }),
     },
     from: (_: string) => {
+<<<<<<< HEAD
+=======
+      // return a chainable object with common query methods that resolve to null data
+>>>>>>> origin/main
       const chain: any = {
         select: async () => ({ data: null, error: null }),
         eq: function () { return this; },
@@ -37,6 +50,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   } as any;
 
   supabase = shim as any;
+<<<<<<< HEAD
 } else if (isWeb) {
   // For web builds, export a lightweight shim that exposes the methods the app expects.
   // This prevents the bundler from pulling in node-only dependencies.
@@ -72,6 +86,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   // eslint-disable-next-line global-require
   const { createClient } = require('@supabase/supabase-js');
 
+=======
+} else {
+>>>>>>> origin/main
   supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: true,
